@@ -1,0 +1,25 @@
+{
+  "name": "eduid-playwright-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright end-to-end tests for the eduID web application (dev.eduid.se)",
+  "scripts": {
+    "test": "playwright test",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:a11y": "playwright test --project=a11y",
+    "test:headed": "playwright test --headed --workers=1",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report",
+    "lint": "tsc --noEmit && cspell --no-progress",
+    "spell": "cspell --no-progress"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.11.0",
+    "@cspell/dict-sv": "2.3.4",
+    "@playwright/test": "1.59.1",
+    "@types/node": "22.15.0",
+    "cspell": "10.3.6",
+    "dotenv": "16.5.0",
+    "typescript": "5.8.3"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "version": "0.2",
+  "language": "en,en-GB,sv",
+  "import": [
+    "@cspell/dict-sv/cspell-ext.json"
+  ],
+  "files": [
+    "src/i18n.ts"
+  ],
+  "words": [
+    "eduid",
+    "eidas",
+    "multifaktorautentisering",
+    "orcid",
+    "sunet",
+    "yyyymmddnnnn",
+    "ååååmmddnnnn"
+  ]
+}
