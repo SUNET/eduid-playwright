@@ -255,3 +255,41 @@ test.describe('Security key in registration', () => {
     await other.context.close();
   });
 });
+
+test.describe('Security key registration prompt', () => {
+  test('security-key-012 leaving the security page while the key prompt is open cancels the registration', async ({ page, app, loggedInAccount }) => {
+    void loggedInAccount;
+    // Record the abort signal that the app passes to navigator.credentials.create(). The fixture has already
+    // loaded the dashboard, so install the recorder in the current page as well as in later ones.
+    const recordCreateSignals = () => {
+      const w = window as unknown as { __createSignals: Array<AbortSignal | undefined> };
+      w.__createSignals = [];
+      const create = navigator.credentials.create.bind(navigator.credentials);
+      navigator.credentials.create = (options) => {
+        w.__createSignals.push(options?.signal ?? undefined);
+        return create(options);
+      };
+    };
+    await page.addInitScript(recordCreateSignals);
+    await page.evaluate(recordCreateSignals);
+    const aborted = () =>
+      page.evaluate(() =>
+        (window as unknown as { __createSignals: Array<AbortSignal | undefined> }).__createSignals.map((s) => s?.aborted),
+      );
+
+    // A key that never answers: the browser prompt stays open until the app cancels it.
+    const authenticator = await VirtualAuthenticator.attach(page, 'usb', false, false);
+    await app.header.goTo('security');
+    await app.security.addSecurityKey.click();
+    await fillStable(app.security.keyNameInput, 'pw-key-cancel');
+    await app.security.keyNameSubmit.click();
+    await expect.poll(aborted).toEqual([false]);
+
+    await app.header.goTo('start');
+    await expect.poll(aborted).toEqual([true]);
+
+    await app.header.goTo('security');
+    await expect(app.security.keysSection).toContainText(texts.sv.security.noKeys);
+    expect(await authenticator.credentialCount()).toBe(0);
+  });
+});

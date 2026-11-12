@@ -141,3 +141,26 @@ test.describe('Remember me', () => {
     await expect(page).not.toHaveURL(/\/start/);
   });
 });
+
+test.describe('Passkey autofill support', () => {
+  test('login-014 a browser without conditional passkey support gets no error banner and keeps the passkey button', async ({ page, app }) => {
+    // Remove conditional UI (passkey autofill) support before the app starts, and count any conditional request
+    // the app still makes. DEF-04: without this gate such browsers got a raw NotSupportedError banner.
+    await page.addInitScript(() => {
+      const w = window as unknown as { __conditionalGets: number };
+      w.__conditionalGets = 0;
+      PublicKeyCredential.isConditionalMediationAvailable = () => Promise.resolve(false);
+      const get = navigator.credentials.get.bind(navigator.credentials);
+      navigator.credentials.get = (options) => {
+        if (options?.mediation === 'conditional') w.__conditionalGets++;
+        return get(options);
+      };
+    });
+    await app.start.openLogin();
+    await expect(app.login.passkey).toBeVisible();
+    // Deliberate wait window for a negative check: the banner would show up after the failed request.
+    await page.waitForTimeout(2_000);
+    expect(await page.evaluate(() => (window as unknown as { __conditionalGets: number }).__conditionalGets)).toBe(0);
+    await expect(page.getByRole('alert').filter({ hasText: 'NotSupportedError' })).toHaveCount(0);
+  });
+});
