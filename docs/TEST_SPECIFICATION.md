@@ -192,6 +192,7 @@ Columns: **ID** (`<spec file>-nnn`, numbered in the order of the spec file; §6 
 | security-key-010 | Register with only a passkey, then verify it | 1 | This device → name → "Slutför skapandet av eduID" → verify with Freja+ | No password on the completed page; logged in; passkey "verifierad"; identity verified |
 | security-key-011 | Register with a passkey and a password | 2 | This device → name → suggested password → done; log in from another browser with the password | Password accepted, then the MFA step is required |
 | security-key-012 | Leave the page during the key prompt | 2 | A key that never answers; Security → Säkerhetsnyckel → name; open Start while the prompt is open | `navigator.credentials.create()` was called with an abort signal that is aborted after leaving the page; no key is listed or stored (needs the eduid-front change in PR #2528) |
+| security-key-013 | Leave the page while the challenge is requested | 2 | Hold back the answer to the registration challenge request; Security → Säkerhetsnyckel → name; open Start; release the answer | `navigator.credentials.create()` is never called (needs the eduid-front change in PR #2528) |
 
 ### 5.8 Identity (`identity.spec.ts`)
 | ID | Title | P | Steps | Expected |
