@@ -255,3 +255,80 @@ test.describe('Security key in registration', () => {
     await other.context.close();
   });
 });
+
+test.describe('Security key registration prompt', () => {
+  test('security-key-012 leaving the security page while the key prompt is open cancels the registration', async ({ page, app, loggedInAccount }) => {
+    void loggedInAccount;
+    // Record the abort signal that the app passes to navigator.credentials.create(). The fixture has already
+    // loaded the dashboard, so install the recorder in the current page as well as in later ones.
+    const recordCreateSignals = () => {
+      const w = window as unknown as { __createSignals: Array<AbortSignal | undefined> };
+      w.__createSignals = [];
+      const create = navigator.credentials.create.bind(navigator.credentials);
+      navigator.credentials.create = (options) => {
+        w.__createSignals.push(options?.signal ?? undefined);
+        return create(options);
+      };
+    };
+    await page.addInitScript(recordCreateSignals);
+    await page.evaluate(recordCreateSignals);
+    const aborted = () =>
+      page.evaluate(() =>
+        (window as unknown as { __createSignals: Array<AbortSignal | undefined> }).__createSignals.map((s) => s?.aborted),
+      );
+
+    // A key that never answers: the browser prompt stays open until the app cancels it.
+    const authenticator = await VirtualAuthenticator.attach(page, 'usb', false, false);
+    await app.header.goTo('security');
+    await app.security.addSecurityKey.click();
+    await fillStable(app.security.keyNameInput, 'pw-key-cancel');
+    await app.security.keyNameSubmit.click();
+    await expect.poll(aborted).toEqual([false]);
+
+    await app.header.goTo('start');
+    await expect.poll(aborted).toEqual([true]);
+
+    await app.header.goTo('security');
+    await expect(app.security.keysSection).toContainText(texts.sv.security.noKeys);
+    expect(await authenticator.credentialCount()).toBe(0);
+  });
+
+  test('security-key-013 leaving the security page while the challenge is requested does not open the key prompt', async ({ page, app, loggedInAccount }) => {
+    void loggedInAccount;
+    // Record calls to navigator.credentials.create(); the fixture has already loaded the dashboard.
+    const recordCreateCalls = () => {
+      const w = window as unknown as { __createCalls: number };
+      w.__createCalls = 0;
+      const create = navigator.credentials.create.bind(navigator.credentials);
+      navigator.credentials.create = (options) => {
+        w.__createCalls++;
+        return create(options);
+      };
+    };
+    await page.addInitScript(recordCreateCalls);
+    await page.evaluate(recordCreateCalls);
+    const createCalls = () => page.evaluate(() => (window as unknown as { __createCalls: number }).__createCalls);
+
+    // Hold back the answer to the registration challenge request until the page has been left.
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    await page.route('**/webauthn/register/begin', async (route) => {
+      await gate;
+      await route.continue();
+    });
+
+    await VirtualAuthenticator.attach(page, 'usb', false, false);
+    await app.header.goTo('security');
+    await app.security.addSecurityKey.click();
+    await fillStable(app.security.keyNameInput, 'pw-key-early-exit');
+    await app.security.keyNameSubmit.click();
+    await app.header.goTo('start');
+
+    const answered = page.waitForResponse(/\/webauthn\/register\/begin/);
+    release();
+    await answered;
+    // Deliberate wait window for a negative check: a prompt would be started right after the answer arrives.
+    await page.waitForTimeout(1_000);
+    expect(await createCalls()).toBe(0);
+  });
+});

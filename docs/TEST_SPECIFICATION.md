@@ -116,6 +116,7 @@ Columns: **ID** (`<spec file>-nnn`, numbered in the order of the spec file; §6 
 | login-011 | Remember me off | 2 | Log in with remember me off, log out | Empty username field |
 | login-012 | "Not you?" | 2 | Remembered user → Not you → log in as another user | Second user is logged in |
 | login-013 | Password needed after logout | 1 | Log in, log out, log in again | The password field is empty and required |
+| login-014 | No passkey autofill support | 2 | Remove conditional-UI support before the app starts (`isConditionalMediationAvailable` → false), open the login page | The passkey button is shown, the app makes no conditional passkey request, and no "NotSupportedError" banner appears (DEF-04; needs the eduid-front change that gates the request, PR #2528) |
 
 ### 5.3 Registration (`registration.spec.ts`)
 | ID | Title | P | Steps | Expected |
@@ -190,6 +191,8 @@ Columns: **ID** (`<spec file>-nnn`, numbered in the order of the spec file; §6 
 | security-key-009 | Register with a USB security key | 1 | Security key → name → (password required) → suggested password → login → key → verify the key with Freja+ | "Den här typen av nyckel kräver även ett lösenord"; no "Slutför" without a password; login needs the key; key "verifierad" and identity verified |
 | security-key-010 | Register with only a passkey, then verify it | 1 | This device → name → "Slutför skapandet av eduID" → verify with Freja+ | No password on the completed page; logged in; passkey "verifierad"; identity verified |
 | security-key-011 | Register with a passkey and a password | 2 | This device → name → suggested password → done; log in from another browser with the password | Password accepted, then the MFA step is required |
+| security-key-012 | Leave the page during the key prompt | 2 | A key that never answers; Security → Säkerhetsnyckel → name; open Start while the prompt is open | `navigator.credentials.create()` was called with an abort signal that is aborted after leaving the page; no key is listed or stored (needs the eduid-front change in PR #2528) |
+| security-key-013 | Leave the page while the challenge is requested | 2 | Hold back the answer to the registration challenge request; Security → Säkerhetsnyckel → name; open Start; release the answer | `navigator.credentials.create()` is never called (needs the eduid-front change in PR #2528) |
 
 ### 5.8 Identity (`identity.spec.ts`)
 | ID | Title | P | Steps | Expected |
