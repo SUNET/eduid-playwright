@@ -347,6 +347,18 @@ Tested only through eduID's normal pages and its logout endpoint. Outside addres
 
 Not covered: the e-mail list, because the add-e-mail form only accepts valid addresses (account-003), so no HTML can reach it from the UI.
 
+### 5.15 Browser support notice (`browser-support.spec.ts`, Chromium)
+
+The app shows a notice in its notification bar when the browser lacks features it needs (`BrowserSupportCheck` in eduid-front). Current browsers have every feature, so the tests remove them before the app starts (`addInitScript`). This shows that the check reacts to a missing feature, not that a real old browser lacks it. The tests run with an English browser locale: the Swedish text exists only after Transifex has translated it. String.replaceAll is not tested: a library in the bundle calls it while the app starts, so without it nothing renders.
+
+| ID | Title | P | Steps | Expected |
+|---|---|---|---|---|
+| browser-support-001 | A browser with every feature gets no notice | 2 | Open `/` | No notification bar |
+| browser-support-002 (×4) | A missing feature shows the browser notice | 2 | Remove CSS nesting, `:has()`, `Array.at` or `Intl.DisplayNames`, open `/` | "Your browser may not work well with eduID", without the security key text |
+| browser-support-003 | Missing WebAuthn shows only the security key notice | 2 | Remove `PublicKeyCredential`, open `/` | "Security keys and passkeys are not supported by this browser", without the browser text |
+| browser-support-004 | Both in one notice | 3 | Remove `Array.at` and `PublicKeyCredential` | One notice with both texts |
+| browser-support-005 | Shown once per session, can be closed | 3 | Remove `Array.at`, close the notice, reload | Closed notice gone; after the reload no notice (kept in `sessionStorage`) |
+
 ## 6. Traceability: Java suite → Playwright
 
 | Java TC | Playwright | Note |
