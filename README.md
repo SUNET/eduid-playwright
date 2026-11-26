@@ -3,7 +3,7 @@
 Automated browser tests for the eduID web application on **dev.eduid.se**, written in TypeScript with [Playwright](https://playwright.dev).
 This suite replaces the Selenium/Java suite in [SUNET/eduid-automated-tests](https://github.com/SUNET/eduid-automated-tests), area by area.
 
-* 207 tests in 16 spec files, run on desktop Chrome, Firefox and Safari (WebKit) and on two phones (Pixel 7/Chromium, iPhone 14/WebKit): functional (including identity verification with Freja+ and eIDAS), Swedish/English UI, WCAG 2.1 AA (axe), security including brute-force limits, redirects and output escaping, mobile
+* 210 tests in 16 spec files, run on desktop Chrome, Firefox and Safari (WebKit) and on two phones (Pixel 7/Chromium, iPhone 14/WebKit): functional (including identity verification with Freja+ and eIDAS), Swedish/English UI, WCAG 2.1 AA (axe), security including brute-force limits, redirects and output escaping, mobile
 * Every test creates its own account, so there are no shared passwords, no fixed run order and tests run in parallel
 * About 28 minutes for the full suite (all six projects) with 4 workers
 

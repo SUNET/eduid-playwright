@@ -14,11 +14,13 @@ export class VirtualAuthenticator {
   /**
    * @param residentKey true = discoverable credential (a passkey, usable without username/password);
    *                    false = classic second-factor security key.
+   * @param automaticPresence false = the key never answers, so a registration or login prompt stays open.
    */
   static async attach(
     page: Page,
     transport: 'usb' | 'internal' = 'usb',
     residentKey = transport === 'internal',
+    automaticPresence = true,
   ): Promise<VirtualAuthenticator> {
     const cdp = await page.context().newCDPSession(page);
     await cdp.send('WebAuthn.enable');
@@ -29,7 +31,7 @@ export class VirtualAuthenticator {
         hasResidentKey: residentKey,
         hasUserVerification: true,
         isUserVerified: true,
-        automaticPresenceSimulation: true,
+        automaticPresenceSimulation: automaticPresence,
       },
     });
     return new VirtualAuthenticator(cdp, authenticatorId);
